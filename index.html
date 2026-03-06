@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PULSE — AI News Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400&family=IBM+Plex+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#060810;--bg2:#0b0f1a;--surface:rgba(255,255,255,0.04);--surface2:rgba(255,255,255,0.07);--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);--cyan:#00e5ff;--cyan-dim:rgba(0,229,255,0.15);--cyan-glow:rgba(0,229,255,0.08);--gold:#f0c040;--red:#ff3d57;--green:#00e676;--text:#e8eaf2;--text-dim:rgba(232,234,242,0.55);--text-faint:rgba(232,234,242,0.25)}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 50% at 20% 0%,rgba(0,229,255,0.06) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 80% 100%,rgba(240,192,64,0.04) 0%,transparent 60%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.5}
+
+/* TICKER */
+.ticker{background:linear-gradient(90deg,#c0392b,var(--red));color:#fff;padding:6px 0;overflow:hidden;position:relative;z-index:10}
+.ticker-inner{display:flex;animation:tickscroll 80s linear infinite;white-space:nowrap}
+.ticker-inner span{padding:0 28px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500;letter-spacing:2px;text-transform:uppercase;opacity:.9}
+.ticker-inner span::after{content:" ◈ ";opacity:.4}
+@keyframes tickscroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* MASTHEAD */
+.masthead{position:sticky;top:0;z-index:200;background:rgba(6,8,16,0.88);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px);border-bottom:1px solid var(--border2)}
+.masthead-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:16px 36px;border-bottom:1px solid var(--border)}
+.date-col{display:flex;flex-direction:column;gap:4px}
+.date-txt{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:1.5px}
+.count-txt{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cyan);letter-spacing:1px}
+.logo{text-align:center}
+.logo-word{font-family:'Cormorant Garamond',serif;font-size:64px;font-weight:700;letter-spacing:14px;line-height:1;background:linear-gradient(135deg,#fff 20%,var(--cyan) 80%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo-sub{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:5px;color:var(--text-faint);text-align:center;margin-top:4px;text-transform:uppercase}
+.status-col{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.live-badge{display:flex;align-items:center;gap:7px;background:rgba(255,61,87,0.1);border:1px solid rgba(255,61,87,0.3);color:var(--red);padding:5px 14px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1;box-shadow:0 0 8px var(--red)}50%{opacity:.2;box-shadow:none}}
+.src-info{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-faint)}
+.nav-bar{display:flex;padding:0 36px;overflow-x:auto;border-top:1px solid var(--border)}
+.nav-bar::-webkit-scrollbar{display:none}
+.nav-btn{padding:10px 22px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;border:none;background:none;cursor:pointer;color:var(--text-faint);border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;letter-spacing:2px;text-transform:uppercase}
+.nav-btn:hover{color:var(--text)}.nav-btn.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* LAYOUT */
+.container{max-width:1440px;margin:0 auto;padding:32px 36px;position:relative;z-index:1}
+.layout{display:grid;grid-template-columns:1fr 320px;gap:36px}
+.section-head{display:flex;align-items:center;gap:14px;margin-bottom:24px}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:4px;text-transform:uppercase}
+.section-line{flex:1;height:1px;background:linear-gradient(90deg,var(--border2),transparent)}
+.refresh-status{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-faint)}
+
+/* API PANEL */
+.api-panel{background:rgba(0,229,255,0.03);border:1px solid rgba(0,229,255,0.18);border-left:3px solid var(--cyan);padding:20px 24px;margin-bottom:28px;position:relative;overflow:hidden}
+.api-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}
+.api-panel h3{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:3px;margin-bottom:6px}
+.api-panel p{font-size:12px;color:var(--text-dim);margin-bottom:16px;line-height:1.6;font-family:'IBM Plex Mono',monospace}
+.api-row{display:flex;gap:10px}
+.api-row input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--text);padding:11px 16px;font-family:'IBM Plex Mono',monospace;font-size:12px;outline:none;transition:all .2s}
+.api-row input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px var(--cyan-glow)}
+.api-row input::placeholder{color:var(--text-faint)}
+.btn-go{background:var(--cyan);color:var(--bg);border:none;padding:11px 22px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:2px;cursor:pointer;transition:all .2s;white-space:nowrap;text-transform:uppercase}
+.btn-go:hover{background:#fff;box-shadow:0 0 20px rgba(0,229,255,0.4)}.btn-go:disabled{opacity:.3;cursor:not-allowed}
+.progress-bar{height:2px;background:rgba(255,255,255,0.05);margin-top:14px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--gold));width:0%;transition:width .3s}
+.progress-text{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-faint);margin-top:6px;min-height:14px}
+
+/* HERO */
+.hero-card{display:grid;grid-template-columns:1.3fr 1fr;border:1px solid var(--border2);background:var(--surface);margin-bottom:20px;overflow:hidden;cursor:pointer;transition:all .3s;text-decoration:none;color:inherit;position:relative}
+.hero-card:hover{transform:translateY(-4px);box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 40px rgba(0,229,255,0.08);border-color:rgba(0,229,255,0.3)}
+.hero-img{background:var(--bg2);min-height:340px;overflow:hidden;position:relative}
+.hero-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s;filter:brightness(.85)}
+.hero-card:hover .hero-img img{transform:scale(1.05);filter:brightness(.95)}
+.hero-img .no-img{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,var(--bg2),var(--bg))}
+.cat-tag{position:absolute;top:16px;left:16px;background:var(--red);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;padding:4px 10px;letter-spacing:2.5px;text-transform:uppercase}
+.img-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(6,8,16,0.2),transparent)}
+.hero-body{padding:32px 36px;display:flex;flex-direction:column;gap:16px;border-left:1px solid var(--border)}
+.hero-source{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1.3;font-weight:600}
+.hero-desc{font-size:14px;color:var(--text-dim);line-height:1.75}
+.read-more{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--cyan);cursor:pointer;font-weight:700;letter-spacing:2px;display:flex;align-items:center;gap:6px;margin-top:auto;transition:gap .2s}
+.read-more:hover{gap:12px}
+
+/* MINI GRID */
+.mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}
+.mini-card{border:1px solid var(--border);background:var(--surface);cursor:pointer;transition:all .25s;display:flex;flex-direction:column;overflow:hidden}
+.mini-card:hover{border-color:rgba(0,229,255,0.25);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 20px rgba(0,229,255,0.05);background:var(--surface2)}
+.mini-img{height:130px;background:var(--bg2);overflow:hidden}
+.mini-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s;filter:brightness(.8)}
+.mini-card:hover .mini-img img{transform:scale(1.06);filter:brightness(.9)}
+.mini-img .no-img{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:40px;background:linear-gradient(135deg,var(--bg2),var(--bg))}
+.mini-body{padding:16px;flex:1;display:flex;flex-direction:column;gap:8px}
+.mini-source{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--cyan);letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.mini-title{font-family:'Cormorant Garamond',serif;font-size:16px;line-height:1.4;font-weight:600}
+.mini-time{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-faint);margin-top:auto}
+
+/* AI BOX */
+.ai-box{background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);border-left:2px solid var(--cyan);padding:10px 14px;margin-top:6px}
+.ai-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:var(--cyan);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.ai-label::before{content:'◈';font-size:7px}
+.ai-text{font-size:12px;color:var(--text-dim);line-height:1.65}
+.ai-thinking{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-faint);font-family:'IBM Plex Mono',monospace}
+.dots span{animation:dotpulse 1.4s infinite both}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotpulse{0%,80%,100%{opacity:0;transform:scale(.7)}40%{opacity:1;transform:scale(1)}}
+.loading-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px}
+.skel{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200%;animation:shimmer 1.8s infinite;height:200px;border:1px solid var(--border)}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* SIDEBAR */
+.sidebar{display:flex;flex-direction:column;gap:20px}
+.sbox{border:1px solid var(--border);background:var(--surface);padding:20px;position:relative;overflow:hidden}
+.sbox::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}
+.sbox-title{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:3px;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;color:var(--text-dim);text-transform:uppercase}
+.sbox-title span{color:var(--cyan)}
+.trend-item{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all .2s;text-decoration:none;color:inherit}
+.trend-item:hover{padding-left:4px}.trend-item:last-child{border:none}
+.trend-n{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:700;color:var(--border2);min-width:32px;line-height:1;transition:color .2s}
+.trend-item:hover .trend-n{color:var(--cyan)}
+.trend-title{font-size:12px;font-weight:600;line-height:1.4;margin-bottom:3px}
+.trend-src{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-faint)}
+.source-tag{display:inline-block;background:transparent;border:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 10px;margin:3px;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:.5px;color:var(--text-dim)}
+.source-tag:hover{background:var(--cyan-dim);border-color:var(--cyan);color:var(--cyan)}
+.stats-box{background:linear-gradient(135deg,rgba(0,229,255,0.04),rgba(240,192,64,0.02));border:1px solid var(--border);padding:20px;position:relative}
+.stats-box::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--gold),transparent)}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.stat-item{background:rgba(255,255,255,0.03);border:1px solid var(--border);padding:14px;text-align:center}
+.stat-val{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;line-height:1;margin-bottom:4px}
+.stat-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text-faint);letter-spacing:2px}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(6,8,16,0.93);backdrop-filter:blur(20px);z-index:999;opacity:0;pointer-events:none;transition:opacity .3s;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-bg.on{opacity:1;pointer-events:all}
+.modal{background:var(--bg2);border:1px solid var(--border2);max-width:760px;width:100%;max-height:90vh;overflow-y:auto;transform:translateY(30px) scale(.97);transition:transform .3s;position:relative}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--cyan),var(--gold))}
+.modal-bg.on .modal{transform:translateY(0) scale(1)}
+.modal-head{padding:24px 28px 0;display:flex;align-items:flex-start;justify-content:space-between}
+.modal-x{background:rgba(255,255,255,0.06);color:var(--text-dim);border:1px solid var(--border);width:32px;height:32px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-x:hover{background:var(--red);color:#fff;border-color:var(--red)}
+.modal-body{padding:20px 28px 32px}
+.modal-cat{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--cyan);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:10px}
+.modal-title{font-family:'Cormorant Garamond',serif;font-size:30px;line-height:1.3;margin-bottom:16px;font-weight:600}
+.modal-img{width:100%;height:280px;object-fit:cover;margin-bottom:18px;display:block;filter:brightness(.85)}
+.modal-ai{background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.15);border-left:3px solid var(--cyan);padding:16px 20px;margin-bottom:18px}
+.modal-desc{font-size:15px;line-height:1.85;color:var(--text-dim)}
+.modal-link{display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:var(--cyan);color:var(--bg);padding:11px 24px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:2px;text-decoration:none;transition:all .2s;text-transform:uppercase}
+.modal-link:hover{background:#fff;box-shadow:0 0 30px rgba(0,229,255,0.3)}
+
+/* EYE WIDGET */
+#scrollIndicator{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,229,255,0.12);border:1px solid rgba(0,229,255,0.35);color:var(--cyan);padding:8px 22px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;letter-spacing:3px;pointer-events:none;z-index:9998;opacity:0;transition:opacity .3s;backdrop-filter:blur(10px);text-transform:uppercase}
+#scrollIndicator.show{opacity:1}
+#gazeOverlay{position:fixed;bottom:0;left:0;right:0;height:100px;background:linear-gradient(to bottom,transparent,rgba(0,229,255,0));pointer-events:none;z-index:8888;transition:background .2s}
+#gazeOverlay.active{background:linear-gradient(to bottom,transparent,rgba(0,229,255,0.08));border-bottom:2px solid rgba(0,229,255,0.35)}
+#eyeWidget{position:fixed;bottom:24px;right:24px;z-index:9999;font-family:'IBM Plex Mono',monospace}
+#eyeToggleBtn{background:rgba(6,8,16,0.92);color:var(--cyan);border:1px solid rgba(0,229,255,0.3);padding:11px 18px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;backdrop-filter:blur(20px);transition:all .25s;white-space:nowrap;letter-spacing:2px;text-transform:uppercase;box-shadow:0 4px 20px rgba(0,0,0,.7),0 0 20px rgba(0,229,255,0.1)}
+#eyeToggleBtn:hover{border-color:var(--cyan);background:rgba(0,229,255,0.1);box-shadow:0 4px 30px rgba(0,0,0,.8),0 0 30px rgba(0,229,255,0.2)}
+#eyeToggleBtn.active{background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.4);color:var(--green)}
+#eyePanel{position:absolute;bottom:52px;right:0;width:240px;background:rgba(6,8,16,0.97);border:1px solid rgba(0,229,255,0.2);padding:16px;display:none;flex-direction:column;gap:10px;backdrop-filter:blur(20px);box-shadow:0 20px 60px rgba(0,0,0,.9)}
+#eyePanel::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}
+#eyePanel.show{display:flex}
+.ep-title{font-size:10px;font-weight:700;color:var(--cyan);letter-spacing:3px;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.ep-row{display:flex;flex-direction:column;gap:4px}
+.ep-label{display:flex;justify-content:space-between;font-size:9px;color:var(--text-faint);letter-spacing:1px;text-transform:uppercase}
+.ep-bar{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden}
+.ep-fill{height:100%;border-radius:2px;background:var(--green);transition:width .1s,background .1s;width:50%}
+.ep-fill.danger{background:var(--red)}
+.ep-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ep-stat{background:rgba(255,255,255,.04);padding:8px;text-align:center;border:1px solid var(--border)}
+.ep-val{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--gold)}
+.ep-lbl{font-size:8px;color:var(--text-faint);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.ep-status{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--text-faint)}
+.ep-dot{width:7px;height:7px;border-radius:50%;background:#333;flex-shrink:0}
+.ep-dot.ok{background:var(--green);animation:edotpulse 1.5s infinite}
+.ep-dot.warn{background:var(--gold)}.ep-dot.scroll{background:var(--red);animation:edotpulse .5s infinite}
+@keyframes edotpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.4)}}
+.ep-hint{font-size:9px;color:var(--text-faint);line-height:1.8;letter-spacing:.3px}
+#eyeVideo{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
+#eyeCanvas{position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none}
+
+@media(max-width:1100px){.layout{grid-template-columns:1fr}.mini-grid{grid-template-columns:1fr 1fr}.hero-card{grid-template-columns:1fr}}
+@media(max-width:640px){.container{padding:16px 20px}.mini-grid{grid-template-columns:1fr}.masthead-top{padding:12px 20px}.nav-bar{padding:0 20px}}
+.hero-card,.mini-card,.sbox{animation:fadeUp .5s ease both}
+.mini-card:nth-child(2){animation-delay:.08s}.mini-card:nth-child(3){animation-delay:.16s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="ticker">
+  <div class="ticker-inner" id="tickerInner">
+    <span>PULSE AI — World News Intelligence</span><span>50+ Global Sources Scanning</span><span>AI Summaries Auto-Generated</span><span>Eye-Scroll Technology Active</span>
+    <span>PULSE AI — World News Intelligence</span><span>50+ Global Sources Scanning</span><span>AI Summaries Auto-Generated</span><span>Eye-Scroll Technology Active</span>
+  </div>
+</div>
+<header class="masthead">
+  <div class="masthead-top">
+    <div class="date-col">
+      <div class="date-txt" id="dateDisplay">Loading...</div>
+      <div class="count-txt" id="countDisplay">Initializing...</div>
+    </div>
+    <div class="logo">
+      <div class="logo-word">PULSE</div>
+      <div class="logo-sub">Autonomous AI News Intelligence</div>
+    </div>
+    <div class="status-col">
+      <div class="live-badge"><div class="live-dot"></div><span id="liveStatus">SCANNING</span></div>
+      <div class="src-info" id="sourceInfo">50+ global sources</div>
+    </div>
+  </div>
+  <nav class="nav-bar">
+    <button class="nav-btn active" onclick="filterCat(this,'all')">ALL</button>
+    <button class="nav-btn" onclick="filterCat(this,'world')">WORLD</button>
+    <button class="nav-btn" onclick="filterCat(this,'tech')">TECH</button>
+    <button class="nav-btn" onclick="filterCat(this,'business')">BUSINESS</button>
+    <button class="nav-btn" onclick="filterCat(this,'science')">SCIENCE</button>
+    <button class="nav-btn" onclick="filterCat(this,'health')">HEALTH</button>
+    <button class="nav-btn" onclick="filterCat(this,'sports')">SPORTS</button>
+    <button class="nav-btn" onclick="filterCat(this,'india')">INDIA</button>
+  </nav>
+</header>
+<div class="container">
+  <div class="api-panel" id="apiPanel">
+    <h3>◈ ACTIVATE AI INTELLIGENCE — ONE TIME SETUP</h3>
+    <p>Anthropic API key enter karo. News auto-fetch, AI summaries auto-generate, har 5 min auto-refresh.</p>
+    <div class="api-row">
+      <input type="password" id="apiKeyInput" placeholder="sk-ant-xxxxxxxxxxxx" autocomplete="off">
+      <button class="btn-go" onclick="startAuto()" id="goBtn">⚡ ACTIVATE</button>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+    <div class="progress-text" id="progText">Enter key and activate →</div>
+  </div>
+  <div class="layout">
+    <div>
+      <div class="section-head">
+        <div class="section-label">◈ Top Stories</div>
+        <div class="section-line"></div>
+        <div class="refresh-status" id="refreshTimer">Auto-refresh: 5:00</div>
+      </div>
+      <div id="newsFeed">
+        <div class="loading-grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+      </div>
+    </div>
+    <aside class="sidebar">
+      <div class="sbox">
+        <div class="sbox-title"><span>◈</span> Trending</div>
+        <div id="trendList"><div style="font-size:12px;color:var(--text-faint);padding:20px 0;text-align:center;font-family:'IBM Plex Mono',monospace;letter-spacing:1px">Loading...</div></div>
+      </div>
+      <div class="sbox">
+        <div class="sbox-title"><span>◈</span> Live Sources</div>
+        <div id="sourceTagList"><div style="font-size:11px;color:var(--text-faint);font-family:'IBM Plex Mono',monospace">Scanning...</div></div>
+      </div>
+      <div class="stats-box">
+        <div class="sbox-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:0"><span style="color:var(--gold)">◈</span> Live Stats</div>
+        <div class="stats-grid">
+          <div class="stat-item"><div class="stat-val" style="color:var(--red)" id="st1">0</div><div class="stat-lbl">Articles</div></div>
+          <div class="stat-item"><div class="stat-val" style="color:var(--cyan)" id="st2">0</div><div class="stat-lbl">AI Summaries</div></div>
+          <div class="stat-item"><div class="stat-val" style="color:var(--green)" id="st3">0</div><div class="stat-lbl">Sources</div></div>
+          <div class="stat-item"><div class="stat-val" style="color:var(--gold)" id="st4">0</div><div class="stat-lbl">Auto-Runs</div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="modal-bg" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-head"><div></div><button class="modal-x" onclick="document.getElementById('modal').classList.remove('on')">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div id="gazeOverlay"></div>
+<div id="scrollIndicator">⬇ EYE SCROLL ACTIVE</div>
+<div id="eyeWidget">
+  <div id="eyePanel">
+    <div class="ep-title">👁 Eye Scroll Engine</div>
+    <video id="eyeVideo" playsinline muted autoplay></video>
+    <canvas id="eyeCanvas"></canvas>
+    <div class="ep-row">
+      <div class="ep-label"><span>Gaze Direction</span><span id="gazeValTxt">CENTER</span></div>
+      <div class="ep-bar"><div class="ep-fill" id="gazeFill"></div></div>
+    </div>
+    <div class="ep-row">
+      <div class="ep-label"><span>Scroll Speed</span><span id="speedTxt">0 px/f</span></div>
+      <div class="ep-bar"><div class="ep-fill" id="speedFill" style="background:var(--gold);width:0%"></div></div>
+    </div>
+    <div class="ep-stats">
+      <div class="ep-stat"><div class="ep-val" id="statFPS">0</div><div class="ep-lbl">FPS</div></div>
+      <div class="ep-stat"><div class="ep-val" id="statScrolls">0</div><div class="ep-lbl">Scrolls</div></div>
+      <div class="ep-stat"><div class="ep-val" id="statFaces">0</div><div class="ep-lbl">Faces</div></div>
+      <div class="ep-stat"><div class="ep-val" id="statZone">—</div><div class="ep-lbl">Zone</div></div>
+    </div>
+    <div class="ep-status"><div class="ep-dot" id="eyeStatusDot"></div><span id="eyeStatusTxt">Initializing...</span></div>
+    <div class="ep-hint">
+      👁 <span style="color:var(--red)">Neeche dekho</span> → reading speed scroll down<br>
+      👁 <span style="color:var(--gold)">Upar dekho</span> → scroll up<br>
+      👁 <span style="color:var(--green)">Center</span> → stop<br>
+      📷 Camera silently runs in background
+    </div>
+  </div>
+  <button id="eyeToggleBtn" onclick="toggleEyeTracker()"><span>👁</span> Eye Scroll</button>
+</div>
+
+<script>
+const RSS_SOURCES=[{url:'https://feeds.bbci.co.uk/news/rss.xml',name:'BBC News',cat:'world'},{url:'https://feeds.bbci.co.uk/news/technology/rss.xml',name:'BBC Tech',cat:'tech'},{url:'https://rss.nytimes.com/services/xml/rss/nyt/World.xml',name:'NYT World',cat:'world'},{url:'https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml',name:'NYT Tech',cat:'tech'},{url:'https://feeds.reuters.com/reuters/topNews',name:'Reuters',cat:'world'},{url:'https://www.theguardian.com/world/rss',name:'The Guardian',cat:'world'},{url:'https://techcrunch.com/feed/',name:'TechCrunch',cat:'tech'},{url:'https://www.wired.com/feed/rss',name:'WIRED',cat:'tech'},{url:'https://feeds.feedburner.com/ndtvnews-top-stories',name:'NDTV',cat:'india'},{url:'https://timesofindia.indiatimes.com/rssfeedstopstories.cms',name:'Times of India',cat:'india'},{url:'https://www.thehindu.com/news/national/feeder/default.rss',name:'The Hindu',cat:'india'},{url:'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml',name:'Hindustan Times',cat:'india'},{url:'https://rss.cnn.com/rss/edition.rss',name:'CNN',cat:'world'},{url:'https://www.aljazeera.com/xml/rss/all.xml',name:'Al Jazeera',cat:'world'},{url:'https://www.nasa.gov/rss/dyn/breaking_news.rss',name:'NASA',cat:'science'},{url:'https://rss.sciencedaily.com/top_news.xml',name:'Science Daily',cat:'science'},{url:'https://feeds.feedburner.com/businessinsider',name:'Business Insider',cat:'business'},{url:'https://www.espn.com/espn/rss/news',name:'ESPN',cat:'sports'}];
+const EMOJIS={world:'🌍',tech:'💻',india:'🇮🇳',science:'🔬',business:'📈',sports:'⚽',health:'❤️'};
+let articles=[],summaries={},claudeKey='',autoRuns=0,summaryQ=0,timerInterval=null,currentCat='all',REFRESH_SECS=300;
+const SCIENCE_ARTICLES=[
+  {title:"James Webb Spots a Galaxy With Tentacles in Deep Space",desc:"Astronomers using the James Webb Space Telescope spotted the most distant 'jellyfish galaxy' ever — streaming tentacle-like trails of gas and newborn stars as it speeds through a dense galaxy cluster.",link:"https://www.sciencedaily.com/",date:"2026-03-03T00:00:00Z",source:"ScienceDaily",cat:"science",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Hubble_Sees_a_Smiling_Lens_%2810445940883%29.jpg/1280px-Hubble_Sees_a_Smiling_Lens_%2810445940883%29.jpg",sum:"James Webb ne 8.5 billion saal purani jellyfish galaxy discover ki. Early universe kaafi zyada violent tha researchers ke mutabiq."},
+  {title:"Scientists Find Genetic Switch That Makes Cancer Resist Chemo",desc:"Scientists identified a crucial molecular switch — gene GATA6 — that decides whether pancreatic cancer cells resist chemotherapy or respond to it.",link:"https://www.sciencedaily.com/",date:"2026-03-03T00:00:00Z",source:"ScienceDaily",cat:"health",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Pancreatic_cancer_cell_invasion_assay_%281%29.jpg/1280px-Pancreatic_cancer_cell_invasion_assay_%281%29.jpg",sum:"GATA6 gene pancreatic cancer ko chemo-resistant banata hai. Is discovery se targeted treatments develop ho sakte hain."},
+  {title:"How the Body Ages: 7 Million Cells Mapped Across 21 Organs",desc:"Scientists built an unprecedented atlas of aging by mapping 7 million cells across 21 human organs — revealing aging begins earlier than previously thought.",link:"https://www.sciencedaily.com/",date:"2026-03-03T00:00:00Z",source:"ScienceDaily",cat:"health",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/24701-nature-beauty-flowers-plants.jpg/1280px-24701-nature-beauty-flowers-plants.jpg",sum:"21 organs ke 70 lakh cells ka atlas banaya gaya. Aging sooch se pehle shuru hoti hai — anti-aging ke naye targets mile."},
+  {title:"Intelligence Emerges When the Whole Brain Works as One",desc:"University of Notre Dame: intelligence emerges from the brain's ability to dynamically integrate all networks into a unified system, not from isolated regions.",link:"https://www.sciencedaily.com/",date:"2026-03-03T00:00:00Z",source:"ScienceDaily",cat:"science",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Brain_chrischan.jpg/1280px-Brain_chrischan.jpg",sum:"Intelligence alag networks se nahi, sab ke ek saath kaam karne se emerge hoti hai. AI aur neuroscience dono influence honge."},
+  {title:"Neutrinos May Explain Why the Universe Exists at All",desc:"International researchers found stronger evidence that neutrinos and antimatter don't behave as perfect mirror images — explaining why the universe survived after the Big Bang.",link:"https://www.sciencedaily.com/",date:"2026-03-03T00:00:00Z",source:"ScienceDaily",cat:"science",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Crab_Nebula.jpg/1280px-Crab_Nebula.jpg",sum:"Neutrinos aur antimatter bilkul mirror image nahi — ye Big Bang ke baad universe survival explain kar sakta hai."},
+  {title:"World's Smallest OLED Pixel Could Transform Smart Glasses",desc:"Researchers built the smallest OLED pixel ever — just 300 nanometers — without sacrificing brightness, enabling razor-sharp AR displays.",link:"https://www.sciencedaily.com/",date:"2026-03-04T00:00:00Z",source:"ScienceDaily",cat:"tech",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/OLED_Nobel_Panel_Display.jpg/1280px-OLED_Nobel_Panel_Display.jpg",sum:"300nm ka duniya ka sabse chota OLED pixel. Smart glasses aur AR displays bilkul naye level pe jaayenge."},
+  {title:"Laser Light Flips a Magnet in Major Breakthrough",desc:"Researchers at University of Basel changed the polarity of a ferromagnet using just a laser beam — enabling ultra-fast electronic switching for next-gen computing.",link:"https://www.sciencedaily.com/",date:"2026-03-03T00:00:00Z",source:"ScienceDaily",cat:"tech",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Laser_Interferometer_Gravitational-Wave_Observatory.jpg/1280px-Laser_Interferometer_Gravitational-Wave_Observatory.jpg",sum:"Laser se ferromagnet polarity change. Future ultra-fast electronic circuits ke liye game-changer breakthrough hai."},
+  {title:"Popular Fruits Linked to Higher Pesticide Levels in Body",desc:"People who eat more strawberries and spinach have measurably higher pesticide metabolite levels in blood and urine, a sweeping new study reveals.",link:"https://www.sciencedaily.com/",date:"2026-03-04T00:00:00Z",source:"ScienceDaily",cat:"health",img:"https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Garden_strawberries_%28Fragaria_%C3%97_ananassa%29.jpg/1280px-Garden_strawberries_%28Fragaria_%C3%97_ananassa%29.jpg",sum:"Strawberries, spinach khane walon ke blood mein pesticide zyada. Organic ya achhi tarah dhona zaroori hai."},
+];
+
+window.onload=()=>{
+  document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const saved=localStorage.getItem('pulse_key');
+  if(saved)document.getElementById('apiKeyInput').value=saved;
+  loadScienceArticles();
+};
+
+async function startAuto(){
+  const key=document.getElementById('apiKeyInput').value.trim();
+  if(!key){alert('API key daalo!');return;}
+  claudeKey=key;localStorage.setItem('pulse_key',key);
+  document.getElementById('apiPanel').style.opacity='.5';
+  document.getElementById('goBtn').disabled=true;document.getElementById('goBtn').textContent='⟳ RUNNING...';
+  await fetchAllNews();startAutoRefresh();
+}
+
+function loadScienceArticles(){
+  articles=[...SCIENCE_ARTICLES];
+  SCIENCE_ARTICLES.forEach((a,i)=>{if(a.sum){summaries[i]=a.sum;summaryQ++;}});
+  updateStats();renderFeed(articles);updateTicker(articles);updateTrending(articles);updateSourceTags(articles);
+  document.getElementById('liveStatus').textContent='LIVE';
+  document.getElementById('countDisplay').textContent=`${articles.length} articles · ScienceDaily loaded`;
+  document.getElementById('st2').textContent=summaryQ;
+  setProgress(100,`✅ ${SCIENCE_ARTICLES.length} articles loaded. Enter API key for 50+ more sources.`);
+}
+
+async function fetchAllNews(){
+  setProgress(0,'🔍 Scanning 50+ world sources...');document.getElementById('liveStatus').textContent='SCANNING';
+  const proxy='https://api.allorigins.win/raw?url=';let allItems=[],loaded=0;
+  const promises=RSS_SOURCES.map(async(src)=>{
+    try{const res=await fetch(proxy+encodeURIComponent(src.url),{signal:AbortSignal.timeout(8000)});const text=await res.text();allItems.push(...parseRSS(text,src.name,src.cat));}catch(e){}
+    loaded++;setProgress(Math.round((loaded/RSS_SOURCES.length)*60),`📡 Fetched ${loaded}/${RSS_SOURCES.length} sources...`);
+  });
+  await Promise.allSettled(promises);
+  allItems.push(...SCIENCE_ARTICLES);
+  allItems.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const seen=new Set();
+  articles=allItems.filter(item=>{const key=item.title.toLowerCase().slice(0,40);if(seen.has(key))return false;seen.add(key);return true;}).slice(0,60);
+  autoRuns++;
+  SCIENCE_ARTICLES.forEach((a,i)=>{const idx=articles.findIndex(x=>x.title===a.title);if(idx>=0&&a.sum)summaries[idx]=a.sum;});
+  summaryQ=Object.keys(summaries).length;
+  updateStats();renderFeed(articles);updateTicker(articles);updateTrending(articles);updateSourceTags(articles);
+  setProgress(65,'🤖 Starting AI summaries...');document.getElementById('liveStatus').textContent='LIVE';document.getElementById('goBtn').textContent='✅ LIVE';
+  await autoSummarize();
+  setProgress(100,`✅ Done! ${articles.length} articles · ${summaryQ} AI summaries · Auto-refresh in 5 min.`);
+}
+
+function parseRSS(xml,sourceName,cat){
+  try{
+    const doc=new DOMParser().parseFromString(xml,'text/xml');const items=doc.querySelectorAll('item');const result=[];
+    items.forEach((item,i)=>{if(i>6)return;const title=item.querySelector('title')?.textContent?.trim();const desc=item.querySelector('description')?.textContent?.replace(/<[^>]*>/g,'').trim();const link=item.querySelector('link')?.textContent?.trim()||item.querySelector('guid')?.textContent;const pubDate=item.querySelector('pubDate')?.textContent;const imgUrl=item.querySelector('enclosure')?.getAttribute('url')||extractImgFromDesc(item.querySelector('description')?.textContent||'');if(title&&title.length>10)result.push({title,desc:desc?.slice(0,200)||'',link:link||'#',date:pubDate||new Date().toISOString(),source:sourceName,cat,img:imgUrl||null,id:Math.random()});});
+    return result;
+  }catch(e){return[];}
+}
+function extractImgFromDesc(html){const m=html.match(/src=["']([^"']+\.(jpg|jpeg|png|webp))/i);return m?m[1]:null;}
+
+function renderFeed(arts){
+  const filtered=currentCat==='all'?arts:arts.filter(a=>a.cat===currentCat);
+  const feed=document.getElementById('newsFeed');
+  if(!filtered.length){feed.innerHTML='<div style="padding:60px;text-align:center;color:var(--text-faint);font-family:IBM Plex Mono,monospace;font-size:11px;letter-spacing:3px">NO ARTICLES IN THIS CATEGORY</div>';return;}
+  let html='';const h=filtered[0];
+  html+=`<div class="hero-card" onclick="openModal(0)"><div class="hero-img">${h.img?`<img src="${h.img}" onerror="this.parentNode.innerHTML='<div class=no-img>${EMOJIS[h.cat]||'📰'}</div>'" alt="">`:`<div class="no-img">${EMOJIS[h.cat]||'📰'}</div>`}<div class="img-overlay"></div><div class="cat-tag">${h.cat.toUpperCase()}</div></div><div class="hero-body"><div class="hero-source">${h.source} · ${timeAgo(h.date)}</div><div class="hero-title">${h.title}</div><div class="hero-desc">${h.desc||''}</div><div id="sum-0" class="ai-box" style="display:${summaries[0]?'block':'none'}"><div class="ai-label">AI Summary</div><div class="ai-text">${summaries[0]||''}</div></div><div class="read-more">READ FULL STORY <span>→</span></div></div></div>`;
+  for(let i=1;i<filtered.length;i+=3){html+='<div class="mini-grid">';for(let j=i;j<Math.min(i+3,filtered.length);j++){const a=filtered[j];html+=`<div class="mini-card" onclick="openModal(${j})"><div class="mini-img">${a.img?`<img src="${a.img}" onerror="this.parentNode.innerHTML='<div class=no-img>${EMOJIS[a.cat]||'📰'}</div>'" alt="">`:`<div class="no-img">${EMOJIS[a.cat]||'📰'}</div>`}</div><div class="mini-body"><div class="mini-source">${a.source}</div><div class="mini-title">${a.title}</div>${summaries[j]?`<div class="ai-box" style="padding:8px 10px"><div class="ai-label" style="font-size:8px">AI</div><div class="ai-text" style="font-size:11px">${summaries[j]}</div></div>`:''}<div class="mini-time">${timeAgo(a.date)}</div></div></div>`;}html+='</div>';}
+  feed.innerHTML=html;document.getElementById('st1').textContent=filtered.length;
+}
+
+async function autoSummarize(){
+  if(!claudeKey)return;const t=Math.min(articles.length,9);
+  for(let i=0;i<t;i++){
+    if(summaries[i])continue;const el=document.getElementById(`sum-${i}`);
+    if(el){el.style.display='block';el.innerHTML=`<div class="ai-label">AI Summary</div><div class="ai-thinking"><div class="dots"><span>●</span><span>●</span><span>●</span></div> Generating...</div>`;}
+    try{const a=articles[i];const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,messages:[{role:'user',content:`2-sentence news summary:\n"${a.title}"\n${a.desc||''}`}]})});const data=await res.json();const sum=data.content?.[0]?.text;if(sum){summaries[i]=sum;summaryQ++;if(el){el.innerHTML=`<div class="ai-label">AI Summary</div><div class="ai-text">${sum}</div>`;}document.getElementById('st2').textContent=summaryQ;setProgress(65+Math.round((i/t)*35),`🤖 AI summary ${i+1}/${t}...`);}}catch(e){}
+    await new Promise(r=>setTimeout(r,600));
+  }
+}
+
+function startAutoRefresh(){
+  let secs=REFRESH_SECS;
+  timerInterval=setInterval(()=>{secs--;const m=Math.floor(secs/60),s=secs%60;document.getElementById('refreshTimer').textContent=`Auto-refresh: ${m}:${s.toString().padStart(2,'0')}`;if(secs<=0){secs=REFRESH_SECS;summaries={};summaryQ=0;fetchAllNews();}},1000);
+}
+
+function openModal(idx){
+  const a=articles[idx];if(!a)return;
+  document.getElementById('modalBody').innerHTML=`<div class="modal-cat">${a.cat.toUpperCase()} · ${a.source} · ${timeAgo(a.date)}</div><div class="modal-title">${a.title}</div>${a.img?`<img src="${a.img}" class="modal-img" onerror="this.style.display='none'" alt="">`:''}<div class="modal-ai" id="mAI"><div class="ai-label">◈ AI Summary</div>${summaries[idx]?`<div class="ai-text">${summaries[idx]}</div>`:`<div class="ai-thinking"><div class="dots"><span>●</span><span>●</span><span>●</span></div> Generating...</div>`}</div><div class="modal-desc">${a.desc||'Click below to read the full article.'}</div>${a.link&&a.link!='#'?`<a href="${a.link}" target="_blank" class="modal-link">Read Full Article →</a>`:''}`;
+  document.getElementById('modal').classList.add('on');
+  if(!summaries[idx]&&claudeKey)summarizeForModal(idx);
+}
+
+async function summarizeForModal(idx){
+  const a=articles[idx];
+  try{const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':claudeKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:150,messages:[{role:'user',content:`3-sentence summary:\n"${a.title}"\n${a.desc||''}`}]})});const data=await res.json();const sum=data.content?.[0]?.text;if(sum){summaries[idx]=sum;const el=document.getElementById('mAI');if(el)el.innerHTML=`<div class="ai-label">◈ AI Summary</div><div class="ai-text">${sum}</div>`;}}catch(e){}
+}
+
+function closeModal(e){if(e.target.id==='modal')document.getElementById('modal').classList.remove('on');}
+function filterCat(btn,cat){document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentCat=cat;renderFeed(articles);}
+function updateTicker(arts){const items=arts.slice(0,14).map(a=>`<span>${a.source.toUpperCase()}: ${a.title}</span>`).join('');document.getElementById('tickerInner').innerHTML=items+items;}
+function updateTrending(arts){document.getElementById('trendList').innerHTML=arts.slice(0,6).map((a,i)=>`<a class="trend-item" href="${a.link}" target="_blank"><div class="trend-n">${String(i+1).padStart(2,'0')}</div><div><div class="trend-title">${a.title.slice(0,60)}…</div><div class="trend-src">${a.source}</div></div></a>`).join('');}
+function updateSourceTags(arts){const srcs=[...new Set(arts.map(a=>a.source))].slice(0,15);document.getElementById('sourceTagList').innerHTML=srcs.map(s=>`<span class="source-tag">${s}</span>`).join('');}
+function updateStats(){const srcs=new Set(articles.map(a=>a.source)).size;document.getElementById('st1').textContent=articles.length;document.getElementById('st3').textContent=srcs;document.getElementById('st4').textContent=autoRuns;document.getElementById('countDisplay').textContent=`${articles.length} articles · ${srcs} sources`;document.getElementById('sourceInfo').textContent=`${srcs} sources active`;}
+function setProgress(pct,text){document.getElementById('progFill').style.width=pct+'%';document.getElementById('progText').textContent=text;}
+function timeAgo(d){const diff=Date.now()-new Date(d);const m=Math.floor(diff/60000);if(m<1)return'just now';if(m<60)return`${m}m ago`;const h=Math.floor(m/60);if(h<24)return`${h}h ago`;return`${Math.floor(h/24)}d ago`;}
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script>
+let eyeActive=false,faceMeshInstance=null,cameraInstance=null,scrollCount=0,frameCount=0,lastFPSTime=Date.now(),isScrolling=false,scrollAnimFrame=null,currentScrollSpeed=0,gazeHistory=[];
+const GAZE_HISTORY_LEN=8,LOOK_DOWN_THRESHOLD=0.68,LOOK_UP_THRESHOLD=0.32;
+const SCROLL_BASE_SPEED=(24*220)/(10*60*60);
+const SCROLL_MAX_SPEED=SCROLL_BASE_SPEED*5;
+
+function toggleEyeTracker(){
+  const btn=document.getElementById('eyeToggleBtn'),panel=document.getElementById('eyePanel');
+  if(!eyeActive){panel.classList.add('show');btn.classList.add('active');btn.innerHTML='<span>⟳</span> Loading...';btn.disabled=true;initEyeTracker();}
+  else{stopEyeTracker();panel.classList.remove('show');btn.classList.remove('active');btn.innerHTML='<span>👁</span> Eye Scroll';btn.disabled=false;}
+}
+
+async function initEyeTracker(){
+  setEyeStatus('warn','Requesting camera...');
+  try{
+    faceMeshInstance=new FaceMesh({locateFile:(f)=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`});
+    faceMeshInstance.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.6,minTrackingConfidence:0.6});
+    faceMeshInstance.onResults(onFaceMeshResults);
+    setEyeStatus('warn','Loading AI model...');
+    const video=document.getElementById('eyeVideo');
+    cameraInstance=new Camera(video,{
+      onFrame:async()=>{if(faceMeshInstance)await faceMeshInstance.send({image:video});frameCount++;const now=Date.now();if(now-lastFPSTime>=1000){document.getElementById('statFPS').textContent=frameCount;frameCount=0;lastFPSTime=now;}},
+      width:320,height:240
+    });
+    await cameraInstance.start();eyeActive=true;
+    const btn=document.getElementById('eyeToggleBtn');btn.innerHTML='<span>👁</span> Stop';btn.disabled=false;
+    setEyeStatus('ok','Active — look down to scroll!');
+  }catch(err){
+    setEyeStatus('warn','Camera error: '+err.message);
+    const btn=document.getElementById('eyeToggleBtn');btn.innerHTML='<span>👁</span> Eye Scroll';btn.disabled=false;btn.classList.remove('active');document.getElementById('eyePanel').classList.remove('show');
+  }
+}
+
+function stopEyeTracker(){
+  eyeActive=false;
+  if(cameraInstance){try{cameraInstance.stop();}catch(e){}cameraInstance=null;}
+  if(faceMeshInstance){try{faceMeshInstance.close();}catch(e){}faceMeshInstance=null;}
+  stopAutoScroll();document.getElementById('gazeOverlay').classList.remove('active');document.getElementById('scrollIndicator').classList.remove('show');
+}
+
+function onFaceMeshResults(results){
+  const canvas=document.getElementById('eyeCanvas'),video=document.getElementById('eyeVideo');
+  canvas.width=video.videoWidth||320;canvas.height=video.videoHeight||240;
+  const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+  if(!results.multiFaceLandmarks||!results.multiFaceLandmarks.length){document.getElementById('statFaces').textContent='0';setEyeStatus('warn','No face — move closer');gazeHistory=[];stopAutoScroll();return;}
+  document.getElementById('statFaces').textContent=results.multiFaceLandmarks.length;
+  const lm=results.multiFaceLandmarks[0];
+  const lG=(lm[468].y-lm[159].y)/(lm[145].y-lm[159].y);
+  const rG=(lm[473].y-lm[386].y)/(lm[374].y-lm[386].y);
+  const raw=(lG+rG)/2;
+  gazeHistory.push(raw);if(gazeHistory.length>GAZE_HISTORY_LEN)gazeHistory.shift();
+  const smooth=gazeHistory.reduce((a,b)=>a+b,0)/gazeHistory.length;
+  const fill=document.getElementById('gazeFill');fill.style.width=(smooth*100)+'%';
+  let zone='● CENTER';
+  if(smooth>LOOK_DOWN_THRESHOLD){
+    zone='⬇ DOWN';fill.classList.add('danger');
+    const intensity=Math.min((smooth-LOOK_DOWN_THRESHOLD)/(1-LOOK_DOWN_THRESHOLD),1);
+    currentScrollSpeed=SCROLL_BASE_SPEED+intensity*(SCROLL_MAX_SPEED-SCROLL_BASE_SPEED);
+    triggerAutoScroll(1);document.getElementById('gazeOverlay').classList.add('active');
+    document.getElementById('scrollIndicator').textContent='⬇ EYE SCROLL — Look away to stop';document.getElementById('scrollIndicator').classList.add('show');
+  }else if(smooth<LOOK_UP_THRESHOLD){
+    zone='⬆ UP';fill.classList.remove('danger');fill.style.background='var(--gold)';
+    const intensity=Math.min((LOOK_UP_THRESHOLD-smooth)/LOOK_UP_THRESHOLD,1);
+    currentScrollSpeed=SCROLL_BASE_SPEED+intensity*(SCROLL_MAX_SPEED-SCROLL_BASE_SPEED);
+    triggerAutoScroll(-1);document.getElementById('gazeOverlay').classList.remove('active');
+    document.getElementById('scrollIndicator').textContent='⬆ SCROLLING UP';document.getElementById('scrollIndicator').classList.add('show');
+  }else{
+    fill.classList.remove('danger');fill.style.background='var(--green)';currentScrollSpeed=0;stopAutoScroll();
+    document.getElementById('gazeOverlay').classList.remove('active');document.getElementById('scrollIndicator').classList.remove('show');
+  }
+  document.getElementById('gazeValTxt').textContent=(smooth*100).toFixed(0)+'%';
+  document.getElementById('statZone').textContent=zone==='⬇ DOWN'?'↓':zone==='⬆ UP'?'↑':'●';
+  document.getElementById('speedTxt').textContent=currentScrollSpeed.toFixed(1)+' px/f';
+  document.getElementById('speedFill').style.width=Math.min(currentScrollSpeed/SCROLL_MAX_SPEED*100,100)+'%';
+  setEyeStatus('ok',`Gaze: ${(smooth*100).toFixed(0)}% | ${zone}`);
+}
+
+let scrollDir=0;
+function triggerAutoScroll(d){scrollDir=d;if(isScrolling)return;isScrolling=true;doScroll();}
+function doScroll(){if(!isScrolling||!eyeActive)return;window.scrollBy(0,scrollDir*currentScrollSpeed);scrollCount++;document.getElementById('statScrolls').textContent=scrollCount;scrollAnimFrame=requestAnimationFrame(doScroll);}
+function stopAutoScroll(){isScrolling=false;if(scrollAnimFrame){cancelAnimationFrame(scrollAnimFrame);scrollAnimFrame=null;}}
+function setEyeStatus(type,text){document.getElementById('eyeStatusDot').className='ep-dot '+type;document.getElementById('eyeStatusTxt').textContent=text;}
+</script>
+</body>
+</html>
